@@ -101,7 +101,10 @@ async function loadPresentations() {
 }
 
 function renderTabs(scrollToActive = false) {
-  const tabs = $("tabs"); tabs.innerHTML = "";
+  // const tabs = $("tabs"); tabs.innerHTML = "";
+  const tabs = $("tabs");
+  const keepLeft = tabs.scrollLeft;
+  tabs.innerHTML = "";
   presentations.forEach(p => {
     const b = document.createElement("button");
     b.type = "button";
@@ -116,12 +119,13 @@ function renderTabs(scrollToActive = false) {
       currentId = p.id;
       try { localStorage.setItem("admin_pres", String(p.id)); } catch {}
       roster = [];
-      renderTabs(); renderRoster(); loadRoster();
+      renderTabs(true); renderRoster(); loadRoster();
     };
     tabs.appendChild(b);
   });
   // const active = tabs.querySelector(".chip.active");
   // if (active) active.scrollIntoView({ block: "nearest", inline: "nearest" });
+  if (!scrollToActive) tabs.scrollLeft = keepLeft;
   const active = tabs.querySelector(".chip.active");
   if (active && scrollToActive) {
     const t = tabs.getBoundingClientRect(), a = active.getBoundingClientRect();
