@@ -121,6 +121,8 @@
       font-size: .82rem; padding: 6px 10px; border-radius: 8px; cursor: pointer;
     }
     .refresh:hover { color: var(--text); border-color: var(--primary); }
+    .refresh.on { background: rgba(124,92,255,.15); color: var(--primary-2); border-color: var(--primary); }
+    .list-actions { display: flex; gap: 8px; }
 
     .empty-state { text-align: center; color: var(--muted); padding: 50px 20px; }
     .hidden { display: none !important; }
@@ -168,7 +170,10 @@
       <section class="card">
         <div class="list-head">
           <h2>ترتيب العرض</h2>
-          <button class="refresh" id="refresh" type="button">تحديث ↻</button>
+          <div class="list-actions">
+            <button class="refresh" id="toggleEmpty" type="button">إخفاء المتاح</button>
+            <button class="refresh" id="refresh" type="button">تحديث ↻</button>
+          </div>
         </div>
         <div class="progress" id="progress"></div>
         <div class="bar"><div id="barFill"></div></div>
@@ -241,6 +246,21 @@
     let current = null;      // العرض المحدد من الرابط
     let selected = null;     // الرقم المختار
 
+    // إخفاء الصفوف المتاحة من القائمة (يُحفظ في المتصفح)
+    let hideEmpty = false;
+    try { hideEmpty = localStorage.getItem("hide_empty") === "1"; } catch {}
+    function updateToggleBtn() {
+      $("toggleEmpty").textContent = hideEmpty ? "إظهار المتاح" : "إخفاء المتاح";
+      $("toggleEmpty").classList.toggle("on", hideEmpty);
+    }
+    updateToggleBtn();
+    $("toggleEmpty").onclick = () => {
+      hideEmpty = !hideEmpty;
+      try { localStorage.setItem("hide_empty", hideEmpty ? "1" : "0"); } catch {}
+      updateToggleBtn();
+      loadRegistrations();
+    };
+
     // $("year").textContent = new Date().getFullYear();
 
     function showMsg(text, type) { $("msg").textContent = text; $("msg").className = "msg " + type; }
@@ -258,7 +278,7 @@
       const { data, error } = await db.rpc("get_presentation", { p_code: PRES_CODE });
       if (error || !data || !data.length) { showNotFound(); return; }
       current = data[0];
-      document.title = data.title + " — تسجيل الترتيب";
+      document.title = current.title + " — تسجيل الترتيب";
       $("main").classList.remove("hidden");
       $("noPres").classList.add("hidden");
     }
@@ -304,6 +324,7 @@
       // القائمة مرتبة من الأول للأخير
       const list = $("list"); list.innerHTML = "";
       for (let i = 1; i <= current.max_slots; i++) {
+        if (hideEmpty && !taken.has(i)) continue;   // إخفاء المتاح مع بقاء الأرقام الأصلية
         const li = document.createElement("li");
         const n = document.createElement("span"); n.className = "num"; n.textContent = i;
         const nm = document.createElement("span"); nm.className = "sname";
@@ -318,6 +339,12 @@
           li.className = "empty"; nm.textContent = "متاح";
         }
         li.append(n, nm); list.appendChild(li);
+      }
+
+      if (!list.children.length) {
+        const li = document.createElement("li"); li.className = "empty";
+        li.textContent = "لا يوجد مسجّلين بعد";
+        list.appendChild(li);
       }
 
       $("progress").textContent = `${data.length} / ${current.max_slots}`;
