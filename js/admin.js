@@ -100,7 +100,7 @@ async function loadPresentations() {
   renderTabs();
 }
 
-function renderTabs() {
+function renderTabs(scrollToActive = false) {
   const tabs = $("tabs"); tabs.innerHTML = "";
   presentations.forEach(p => {
     const b = document.createElement("button");
