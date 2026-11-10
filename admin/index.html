@@ -16,7 +16,7 @@
     <header class="admin-head">
       <div>
         <h1>لوحة مسؤول العرض</h1>
-        <p id="headSub">ضع ✓ للطالب بعد ما يخلّص عرضه.</p>
+        <p id="headSub" class="hidden">اختر قائمة الاسماء، واضغط على الطالب لتحضيره</p>
       </div>
       <button class="ghost hidden" id="logout" type="button">خروج</button>
     </header>
@@ -37,7 +37,7 @@
     <section class="hidden" id="appView">
       <nav class="chips" id="tabs"></nav>
 
-      <div id="noPres" class="card empty-state hidden">لا توجد عروض. أضف عرضًا من جدول presentations في Supabase.</div>
+      <div id="noPres" class="card empty-state hidden">لا توجد عروض.</div>
 
       <div class="card" id="presCard">
         <div class="pres-head">

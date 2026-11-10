@@ -32,6 +32,7 @@ async function showApp() {
   $("loginView").classList.add("hidden");
   $("appView").classList.remove("hidden");
   $("logout").classList.remove("hidden");
+  $("headSub").classList.remove("hidden");
   await loadPresentations();
   await loadRoster();
   startRefresh();
