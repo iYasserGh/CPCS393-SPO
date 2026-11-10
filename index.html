@@ -185,32 +185,32 @@
 
   <script>
     // ===== الإعدادات: غيّرها ببيانات مشروعك في Supabase =====
-    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+    const SUPABASE_URL = "https://zrrrtcjcwbhzlxwmpwiq.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Qm50drcQBVJraFsW36beig_1LKNuV6j";
     const AUTO_REFRESH_SECONDS = 20;
 
     // روابط قديمة بأرقام (?p=1) تُحوَّل للكود الجديد
     // ضع هنا الـ code (uuid) الخاص بالعرض رقم 1 من جدول presentations
-    const LEGACY_LINKS = {
-      "1": "PUT-UUID-OF-PRESENTATION-1-HERE"
-    };
-    // ========================================================
+    // const LEGACY_LINKS = {
+    //   "1": "code"
+    // };
+    // // ========================================================
 
-    // تحويل الروابط القديمة قبل أي شيء
-    {
-      const p = new URLSearchParams(location.search).get("p");
-      if (p && LEGACY_LINKS[p]) {
-        // نقل تسجيل الجهاز المحفوظ بالرقم القديم إلى الكود الجديد
-        try {
-          const m = JSON.parse(localStorage.getItem("my_regs") || "{}");
-          if (m[p] && !m[LEGACY_LINKS[p]]) {
-            m[LEGACY_LINKS[p]] = m[p]; delete m[p];
-            localStorage.setItem("my_regs", JSON.stringify(m));
-          }
-        } catch {}
-        location.replace(location.pathname + "?p=" + encodeURIComponent(LEGACY_LINKS[p]));
-      }
-    }
+    // // تحويل الروابط القديمة قبل أي شيء
+    // {
+    //   const p = new URLSearchParams(location.search).get("p");
+    //   if (p && LEGACY_LINKS[p]) {
+    //     // نقل تسجيل الجهاز المحفوظ بالرقم القديم إلى الكود الجديد
+    //     try {
+    //       const m = JSON.parse(localStorage.getItem("my_regs") || "{}");
+    //       if (m[p] && !m[LEGACY_LINKS[p]]) {
+    //         m[LEGACY_LINKS[p]] = m[p]; delete m[p];
+    //         localStorage.setItem("my_regs", JSON.stringify(m));
+    //       }
+    //     } catch {}
+    //     location.replace(location.pathname + "?p=" + encodeURIComponent(LEGACY_LINKS[p]));
+    //   }
+    // }
 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = id => document.getElementById(id);
