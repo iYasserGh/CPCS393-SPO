@@ -233,7 +233,7 @@ async function toggleDone(r) {
 $("copyLink").onclick = async () => {
   const p = currentPres();
   if (!p) return;
-  const url = new URL("./?p=" + p.code, location.href).href;
+  const url = new URL("../?p=" + p.code, location.href).href;
   const btn = $("copyLink");
   try {
     await navigator.clipboard.writeText(url);
