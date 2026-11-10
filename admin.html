@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0f17">
+  <meta name="robots" content="noindex, nofollow">
+  <title>لوحة مسؤول العرض</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="wrap narrow">
+    <header class="admin-head">
+      <div>
+        <h1>لوحة مسؤول العرض</h1>
+        <p id="headSub">ضع ✓ للطالب بعد ما يخلّص عرضه.</p>
+      </div>
+      <button class="ghost hidden" id="logout" type="button">خروج</button>
+    </header>
+
+    <!-- تسجيل الدخول -->
+    <section class="card login hidden" id="loginView">
+      <div class="lock">🔒</div>
+      <h2>الدخول</h2>
+      <p class="sub">أدخل كلمة السر الخاصة بمسؤول العرض.</p>
+      <form id="loginForm">
+        <label for="pw">كلمة السر</label>
+        <input type="password" id="pw" required autocomplete="current-password">
+        <button type="submit" class="primary" id="loginBtn">دخول</button>
+      </form>
+      <div class="msg" id="loginMsg"></div>
+    </section>
+
+    <!-- اللوحة -->
+    <section class="hidden" id="appView">
+      <nav class="chips" id="tabs"></nav>
+
+      <div id="noPres" class="card empty-state hidden">لا توجد عروض. أضف عرضًا من جدول presentations في Supabase.</div>
+
+      <div class="card" id="presCard">
+        <div class="pres-head">
+          <div>
+            <h2 id="pTitle">—</h2>
+          </div>
+          <button class="ghost" id="copyLink" type="button">نسخ رابط الطلاب</button>
+        </div>
+        <div class="stats" id="stats"></div>
+        <div class="bar"><div id="barFill"></div></div>
+        <ul class="roster" id="roster"></ul>
+      </div>
+
+      <div class="msg" id="appMsg"></div>
+    </section>
+
+    <footer>
+      تطوير ياسر الغامدي ·
+      <a href="https://ysg.sa" target="_blank" rel="noopener">ysg.sa</a>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

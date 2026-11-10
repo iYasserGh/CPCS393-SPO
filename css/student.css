@@ -1,0 +1,62 @@
+/* ===== صفحة الطلاب ===== */
+.layout { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: .8rem; color: var(--muted); margin-bottom: 10px; }
+.legend span::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+  margin-left: 6px; vertical-align: middle;
+}
+.legend .l-free::before   { background: var(--card-2); border: 1px solid var(--border); }
+.legend .l-sel::before    { background: var(--primary); }
+.legend .l-taken::before  { background: #2a2f3d; }
+.legend .l-passed::before { background: transparent; border: 1px dashed #3a4258; }
+
+.turn-note {
+  margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: .88rem;
+  background: rgba(251,191,36,.08); color: var(--warn); border: 1px solid rgba(251,191,36,.25);
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 8px; margin-bottom: 20px; }
+.slot {
+  aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px;
+  background: var(--card-2); border: 1px solid var(--border); font-weight: 600;
+  cursor: pointer; transition: .12s; user-select: none;
+}
+.slot:hover { border-color: var(--primary-2); }
+.slot.selected { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 6px 18px rgba(124,92,255,.35); }
+.slot.taken  { background: #1a1e29; color: #4b5368; cursor: not-allowed; text-decoration: line-through; border-color: transparent; }
+.slot.passed { background: transparent; color: #3e465a; cursor: not-allowed; border: 1px dashed #2e3549; }
+.slot.mine   { background: rgba(52,211,153,.15); color: var(--ok); border-color: var(--ok); text-decoration: none; }
+.slot.taken:hover, .slot.passed:hover { border-color: transparent; }
+.slot.passed:hover { border-color: #2e3549; }
+
+/* القائمة */
+.list-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.list-head h2 { margin: 0; }
+.list-actions { display: flex; gap: 8px; }
+.progress { font-size: .85rem; color: var(--muted); margin-bottom: 6px; }
+
+ul.students { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+ul.students li {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  background: var(--card-2); border: 1px solid var(--border); border-radius: 10px;
+}
+ul.students li.empty  { opacity: .45; border-style: dashed; background: transparent; }
+ul.students li.passed { opacity: .3; }
+ul.students li.me     { border-color: var(--ok); background: rgba(52,211,153,.08); }
+ul.students li.done .sname { color: var(--muted); }
+li.empty .num { background: transparent; color: var(--muted); }
+li.me .num    { background: rgba(52,211,153,.18); color: var(--ok); }
+.sname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag { font-size: .75rem; color: var(--ok); white-space: nowrap; }
+.done-badge {
+  font-size: .75rem; font-weight: 600; color: var(--ok); white-space: nowrap;
+  background: rgba(52,211,153,.12); padding: 3px 8px; border-radius: 99px;
+}
+
+@media (min-width: 820px) {
+  .layout { grid-template-columns: 1.15fr 1fr; gap: 20px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); }
+  ul.students { max-height: 560px; overflow-y: auto; }
+  .slot:hover:not(.taken):not(.passed) { transform: translateY(-1px); }
+}
