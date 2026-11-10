@@ -120,8 +120,15 @@ function renderTabs() {
     };
     tabs.appendChild(b);
   });
+  // const active = tabs.querySelector(".chip.active");
+  // if (active) active.scrollIntoView({ block: "nearest", inline: "nearest" });
   const active = tabs.querySelector(".chip.active");
-  if (active) active.scrollIntoView({ block: "nearest", inline: "nearest" });
+  if (active && scrollToActive) {
+    const t = tabs.getBoundingClientRect(), a = active.getBoundingClientRect();
+    if (a.left < t.left || a.right > t.right) {
+      tabs.scrollBy({ left: a.left - t.left - 16, behavior: "smooth" });
+    }
+  }
 }
 
 function currentPres() { return presentations.find(p => p.id === currentId); }
