@@ -41,20 +41,6 @@
     header h1 { margin: 0 0 6px; font-size: 1.9rem; font-weight: 700; letter-spacing: -.01em; }
     header p { margin: 0; color: var(--muted); }
 
-    /* اختيار العرض */
-    .tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
-    .tab {
-      background: var(--card); border: 1px solid var(--border); color: var(--text);
-      padding: 10px 16px; border-radius: 999px; cursor: pointer; font: inherit; font-weight: 500;
-      display: flex; align-items: center; gap: 8px; transition: .15s;
-    }
-    .tab:hover { border-color: var(--primary); }
-    .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-    .tab .count {
-      font-size: .78rem; background: rgba(255,255,255,.12); padding: 2px 8px; border-radius: 999px;
-    }
-    .tab.closed { opacity: .65; }
-
     .layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
     @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
 
@@ -138,18 +124,23 @@
 
     .empty-state { text-align: center; color: var(--muted); padding: 50px 20px; }
     .hidden { display: none !important; }
+
+    footer {
+      margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border);
+      text-align: center; color: var(--muted); font-size: .88rem;
+    }
+    footer a { color: var(--primary-2); text-decoration: none; font-weight: 600; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <h1>تسجيل ترتيب العروض</h1>
-      <p>اختر العرض، اكتب اسمك، ثم اختر رقمًا متاحًا.</p>
+      <p>اكتب اسمك، ثم اختر رقمًا متاحًا.</p>
     </header>
 
-    <div class="tabs" id="tabs"></div>
-
-    <div id="noPres" class="card empty-state hidden">لا توجد عروض متاحة حاليًا.</div>
+    <div id="noPres" class="card empty-state hidden">الرابط غير صحيح أو العرض غير موجود. تأكد من الرابط المرسل لك.</div>
 
     <div class="layout" id="main">
       <section class="card">
@@ -184,14 +175,42 @@
         <ul class="students" id="list"></ul>
       </section>
     </div>
+
+    <footer>
+      © <span id="year"></span> جميع الحقوق محفوظة —
+      <a href="https://ysg.sa" target="_blank" rel="noopener">ysg.sa</a>
+      · تطوير ياسر الغامدي
+    </footer>
   </div>
 
   <script>
     // ===== الإعدادات: غيّرها ببيانات مشروعك في Supabase =====
-    const SUPABASE_URL = "https://zrrrtcjcwbhzlxwmpwiq.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_Qm50drcQBVJraFsW36beig_1LKNuV6j";
+    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
     const AUTO_REFRESH_SECONDS = 20;
+
+    // روابط قديمة بأرقام (?p=1) تُحوَّل للكود الجديد
+    // ضع هنا الـ code (uuid) الخاص بالعرض رقم 1 من جدول presentations
+    const LEGACY_LINKS = {
+      "1": "PUT-UUID-OF-PRESENTATION-1-HERE"
+    };
     // ========================================================
+
+    // تحويل الروابط القديمة قبل أي شيء
+    {
+      const p = new URLSearchParams(location.search).get("p");
+      if (p && LEGACY_LINKS[p]) {
+        // نقل تسجيل الجهاز المحفوظ بالرقم القديم إلى الكود الجديد
+        try {
+          const m = JSON.parse(localStorage.getItem("my_regs") || "{}");
+          if (m[p] && !m[LEGACY_LINKS[p]]) {
+            m[LEGACY_LINKS[p]] = m[p]; delete m[p];
+            localStorage.setItem("my_regs", JSON.stringify(m));
+          }
+        } catch {}
+        location.replace(location.pathname + "?p=" + encodeURIComponent(LEGACY_LINKS[p]));
+      }
+    }
 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const $ = id => document.getElementById(id);
@@ -218,73 +237,40 @@
       try { localStorage.setItem("my_regs", JSON.stringify(m)); } catch {}
     }
 
-    let presentations = [];
-    let current = null;      // العرض المختار
+    const PRES_CODE = (new URLSearchParams(location.search).get("p") || "").trim().toLowerCase();
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+    let current = null;      // العرض المحدد من الرابط
     let selected = null;     // الرقم المختار
-    let counts = {};
+
+    $("year").textContent = new Date().getFullYear();
 
     function showMsg(text, type) { $("msg").textContent = text; $("msg").className = "msg " + type; }
     function clearMsg() { $("msg").className = "msg"; }
 
-    async function loadPresentations() {
-      const { data, error } = await db
-        .from("presentations")
-        .select("id, title, max_slots, is_open")
-        .order("created_at", { ascending: true });
-      if (error) { showMsg("تعذّر تحميل العروض: " + error.message, "err"); return; }
-      presentations = data;
-
-      // عدد المسجلين في كل عرض
-      const { data: regs } = await db.from("registrations").select("presentation_id");
-      counts = {};
-      (regs || []).forEach(r => counts[r.presentation_id] = (counts[r.presentation_id] || 0) + 1);
-
-      if (!presentations.length) {
-        $("main").classList.add("hidden"); $("noPres").classList.remove("hidden"); $("tabs").innerHTML = "";
-        return;
-      }
-      $("main").classList.remove("hidden"); $("noPres").classList.add("hidden");
-
-      // اختيار العرض من الرابط ?p=ID أو الأول
-      if (!current) {
-        const fromUrl = Number(new URLSearchParams(location.search).get("p"));
-        current = presentations.find(p => p.id === fromUrl) || presentations.find(p => p.is_open) || presentations[0];
-      } else {
-        current = presentations.find(p => p.id === current.id) || presentations[0];
-      }
-      renderTabs();
+    function showNotFound() {
+      current = null;
+      $("main").classList.add("hidden");
+      $("noPres").classList.remove("hidden");
     }
 
-    function renderTabs() {
-      const tabs = $("tabs"); tabs.innerHTML = "";
-      presentations.forEach(p => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "tab" + (p.id === current.id ? " active" : "") + (p.is_open ? "" : " closed");
-        const t = document.createElement("span"); t.textContent = p.title;
-        const c = document.createElement("span"); c.className = "count";
-        c.textContent = (counts[p.id] || 0) + "/" + p.max_slots;
-        b.append(t, c);
-        b.onclick = () => {
-          current = p; selected = null; clearMsg();
-          history.replaceState(null, "", "?p=" + p.id);
-          renderTabs(); loadRegistrations();
-        };
-        tabs.appendChild(b);
-      });
+    // يحمّل العرض المحدد بالكود في الرابط ?p=UUID فقط
+    async function loadPresentation() {
+      if (!UUID_RE.test(PRES_CODE)) { showNotFound(); return; }
+      const { data, error } = await db.rpc("get_presentation", { p_code: PRES_CODE });
+      if (error || !data || !data.length) { showNotFound(); return; }
+      current = data[0];
+      document.title = data.title + " — تسجيل الترتيب";
+      $("main").classList.remove("hidden");
+      $("noPres").classList.add("hidden");
     }
 
     async function loadRegistrations() {
       if (!current) return;
-      const { data, error } = await db
-        .from("registrations")
-        .select("student_name, order_number")
-        .eq("presentation_id", current.id)
-        .order("order_number", { ascending: true });
+      const { data, error } = await db.rpc("get_registrations", { p_code: PRES_CODE });
       if (error) { showMsg("تعذّر تحميل التسجيلات: " + error.message, "err"); return; }
 
       const taken = new Map(data.map(r => [r.order_number, r.student_name]));
-      const myNum = getMine()[current.id];
+      const myNum = getMine()[PRES_CODE];
       const alreadyMine = myNum && taken.has(myNum);
       if (taken.has(selected)) selected = null;
 
@@ -346,11 +332,11 @@
       if (!selected) return showMsg("اختر رقم ترتيب.", "err");
 
       $("btn").disabled = true;
-      const { error } = await db.from("registrations").insert({
-        presentation_id: current.id,
-        student_name: name,
-        order_number: selected,
-        device_id: DEVICE_ID
+      const { error } = await db.rpc("register", {
+        p_code: PRES_CODE,
+        p_name: name,
+        p_order: selected,
+        p_device: DEVICE_ID
       });
 
       if (error) {
@@ -360,31 +346,36 @@
           if (m.includes("uniq_device")) showMsg("هذا الجهاز سجّل مسبقًا في هذا العرض.", "err");
           else if (m.includes("uniq_name")) showMsg("هذا الاسم مسجّل مسبقًا في هذا العرض.", "err");
           else showMsg(`الرقم ${selected} انحجز للتو، اختر رقمًا آخر.`, "err");
-        } else if (error.code === "42501") {
-          showMsg("لا يمكن التسجيل: العرض مغلق أو الرقم خارج النطاق.", "err");
+        } else if (m.includes("closed")) {
+          showMsg("التسجيل مغلق لهذا العرض.", "err");
+        } else if (m.includes("out_of_range")) {
+          showMsg("رقم الترتيب خارج النطاق.", "err");
+        } else if (m.includes("bad_name")) {
+          showMsg("الاسم غير صالح.", "err");
+        } else if (m.includes("not_found")) {
+          showMsg("العرض غير موجود.", "err");
         } else {
           showMsg("حدث خطأ: " + m, "err");
         }
       } else {
-        saveMine(current.id, selected);
+        saveMine(PRES_CODE, selected);
         $("form").reset();
         showMsg(`تم تسجيل ${name} برقم ${selected} ✔`, "ok");
         selected = null;
-        counts[current.id] = (counts[current.id] || 0) + 1;
-        renderTabs();
       }
       await loadRegistrations();
       if (!error) showMsg(`تم التسجيل بنجاح ✔`, "ok");
     });
 
-    $("refresh").onclick = async () => { await loadPresentations(); loadRegistrations(); };
+    $("refresh").onclick = async () => { await loadPresentation(); loadRegistrations(); };
 
     (async () => {
-      await loadPresentations();
+      await loadPresentation();
+      if (!current) return;
       await loadRegistrations();
       setInterval(async () => {
         if (document.hidden) return;
-        await loadPresentations(); loadRegistrations();
+        await loadPresentation(); loadRegistrations();
       }, AUTO_REFRESH_SECONDS * 1000);
     })();
   </script>
